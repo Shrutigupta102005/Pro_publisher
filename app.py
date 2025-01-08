@@ -1,85 +1,71 @@
-import streamlit as st
+import os
 import re
+import pandas as pd
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-import textstat
-from textblob import TextBlob
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, classification_report
+from flask import Flask, request, jsonify, render_template
 
-def load_paper(filepath):
-    with open(filepath, 'r', encoding='utf-8') as file:
-        return file.read()
+# Preprocessing Function
+def preprocess_text(text):
+    text = text.lower()
+    text = re.sub(r'\W', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text
 
-def extract_keywords(text, top_n=10):
-    tfidf = TfidfVectorizer(stop_words='english', max_features=top_n)
-    tfidf_matrix = tfidf.fit_transform([text])
-    keywords = tfidf.get_feature_names_out()
-    return keywords
+# Load Dataset
+def load_dataset():
+    # Simulated dataset structure (replace with actual dataset loading)
+    data = pd.DataFrame({
+        'text': [
+            'Deep learning methods for NLP tasks.',
+            'A study of GANs in decentralized systems.',
+            'Optimized transfer learning techniques.',
+            'Theoretical analysis of stochastic gradients.'
+        ],
+        'label': ['Publishable', 'Publishable', 'Non-Publishable', 'Non-Publishable'],
+        'conference': ['AIConf', 'MLConf', None, None]
+    })
+    data['text'] = data['text'].apply(preprocess_text)
+    return data
 
-def assess_readability(text):
-    return textstat.flesch_reading_ease(text)
+# Feature Extraction
+def extract_features(data):
+    vectorizer = TfidfVectorizer(max_features=1000)
+    X = vectorizer.fit_transform(data['text']).toarray()
+    return X, vectorizer
 
-def grammar_sentiment_analysis(text):
-    blob = TextBlob(text)
-    errors = sum(1 for sentence in blob.sentences if len(sentence.correct()) != len(sentence))
-    sentiment = blob.sentiment.polarity
-    return errors, sentiment
+# Train Model
+def train_model(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print("Accuracy:", accuracy_score(y_test, y_pred))
+    print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
+    print(classification_report(y_test, y_pred))
+    return model
 
-def evaluate_alignment(keywords, known_topics):
-    overlap = set(keywords).intersection(set(known_topics))
-    alignment_score = len(overlap) / len(known_topics)
-    return alignment_score, list(overlap)
+# Flask Web Application
+app = Flask(__name__)
 
-def assess_publishability(content, known_topics):
-    # Extract Title and Abstract
-    title_match = re.search(r'(\bAbstract\b.*?\n)(.*?\n\n)', content, re.DOTALL)
-    title = content.split("\n")[0].strip()
-    abstract = title_match.group(2).strip() if title_match else "Abstract not found"
+data = load_dataset()
+X, vectorizer = extract_features(data)
+model = train_model(X, data['label'])
 
-    # Step 1: Keyword Extraction
-    keywords = extract_keywords(abstract)
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-    # Step 2: Readability Analysis
-    readability_score = assess_readability(content)
+@app.route('/predict', methods=['POST'])
+def predict():
+    text = request.form['text']
+    processed_text = preprocess_text(text)
+    features = vectorizer.transform([processed_text]).toarray()
+    prediction = model.predict(features)[0]
+    return jsonify({'prediction': prediction})
 
-    # Step 3: Grammar and Sentiment
-    grammar_errors, sentiment = grammar_sentiment_analysis(content)
-
-    # Step 4: Alignment with Research Trends
-    alignment_score, aligned_keywords = evaluate_alignment(keywords, known_topics)
-
-    # Summary Report
-    report = {
-        "Title": title,
-        "Keywords": keywords,
-        "Readability Score (Flesch)": readability_score,
-        "Grammar Errors": grammar_errors,
-        "Sentiment Polarity": sentiment,
-        "Alignment Score": alignment_score,
-        "Aligned Keywords": aligned_keywords
-    }
-
-    return report
-
-st.title("Research Paper Publishability Assessment Tool")
-
-uploaded_file = st.file_uploader("Upload your research paper (TXT format only):", type=["txt"])
-
-known_topics = st.text_input("Enter known research topics (comma-separated):", "language models, chain of thought, interpretability, Bayesian inference")
-
-if uploaded_file and known_topics:
-    known_topics_list = [topic.strip() for topic in known_topics.split(",")]
-    paper_content = uploaded_file.read().decode("utf-8")
-
-    st.write("Processing your document...")
-    report = assess_publishability(paper_content, known_topics_list)
-
-    st.subheader("Publishability Report")
-    st.write(f"**Title:** {report['Title']}")
-    st.write(f"**Keywords:** {', '.join(report['Keywords'])}")
-    st.write(f"**Readability Score (Flesch):** {report['Readability Score (Flesch)']:.2f}")
-    st.write(f"**Grammar Errors:** {report['Grammar Errors']}")
-    st.write(f"**Sentiment Polarity:** {report['Sentiment Polarity']:.2f}")
-    st.write(f"**Alignment Score:** {report['Alignment Score']:.2f}")
-    st.write(f"**Aligned Keywords:** {', '.join(report['Aligned Keywords'])}")
-
-else:
-    st.write("Please upload a TXT file and provide known research topics.")
+if __name__ == '__main__':
+    app.run(debug=True)
