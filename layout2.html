@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Publishability Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-container textarea {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            resize: none;
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container button {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 250px;
+            text-align: center;
+        }
+
+        .form-container button:hover {
+            background: linear-gradient(135deg, #16a085, #1abc9c);
+            transform: translateY(-3px);
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #ecf0f1;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .form-container {
+                padding: 30px 20px;
+            }
+
+            .form-container textarea {
+                height: 120px;
+            }
+
+            .form-container button {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Research Paper Publishability Assessment</h1>
+    <div class="form-container">
+        <form action="/predict" method="POST">
+            <textarea name="text" rows="10" cols="50" placeholder="Paste your paper abstract or text here..."></textarea><br>
+            <button type="submit">Check Publishability</button>
+        </form>
+    </div>
+    <h2 id="result"></h2>
+</body>
+</html>
