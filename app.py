@@ -15,19 +15,15 @@ def preprocess_text(text):
     text = re.sub(r'\s+', ' ', text)
     return text
 
-# Load Dataset
 def load_dataset():
-    # Simulated dataset structure (replace with actual dataset loading)
-    data = pd.DataFrame({
-        'text': [
-            'Deep learning methods for NLP tasks.',
-            'A study of GANs in decentralized systems.',
-            'Optimized transfer learning techniques.',
-            'Theoretical analysis of stochastic gradients.'
-        ],
-        'label': ['Publishable', 'Publishable', 'Non-Publishable', 'Non-Publishable'],
-        'conference': ['AIConf', 'MLConf', None, None]
-    })
+    # Update with the actual file path
+    file_path = 'C:/Users/shrut/OneDrive/Desktop/iitK/research_papers.csv'
+    data = pd.read_csv(file_path)
+    data['text'] = data['text'].apply(preprocess_text)
+    return data
+
+
+    # Preprocess the text
     data['text'] = data['text'].apply(preprocess_text)
     return data
 
@@ -51,6 +47,7 @@ def train_model(X, y):
 # Flask Web Application
 app = Flask(__name__)
 
+# Load the dataset and train the model
 data = load_dataset()
 X, vectorizer = extract_features(data)
 model = train_model(X, data['label'])
